@@ -1,0 +1,10 @@
+import { expect,test } from 'vitest';
+import { SwipeInput } from '../src/input/SwipeInput';
+test('short swipe produces exactly one original movement unit',()=>{const s=new SwipeInput();s.down(0,0);s.move(30,0,80);expect(s.takeDirection()).toBe(1);expect(s.takeDirection()).toBe(0);});
+test('a quick completed swipe survives until the next fixed tick',()=>{const s=new SwipeInput();s.down(0,0);s.move(40,0,80);s.up(40,0,80);expect(s.takeDirection()).toBe(1);expect(s.takeDirection()).toBe(0);expect(s.takeJump()).toBe(false);});
+test('long drag produces proportional units but stops its backlog on release',()=>{const s=new SwipeInput();s.down(0,0);s.move(250,0,80);expect(s.units).toBe(3);s.takeDirection();s.up(250,0,80);expect(s.takeDirection()).toBe(0);});
+test('reverse swipe discards previous directional backlog',()=>{const s=new SwipeInput();s.down(0,0);s.move(250,0,80);s.move(150,0,80);expect(s.takeDirection()).toBe(-1);});
+test('cancel never emits a tap or leaves movement',()=>{const s=new SwipeInput();s.down(0,0);s.move(250,-100,80);s.cancel();expect(s.takeDirection()).toBe(0);expect(s.takeJump()).toBe(false);});
+test('tap jumps, finger jitter does not walk',()=>{const s=new SwipeInput();s.down(10,10);s.move(12,10,80);expect(s.takeDirection()).toBe(0);s.up(12,10,80);expect(s.takeJump()).toBe(true);expect(s.takeJump()).toBe(false);});
+test('diagonal swipe jumps and moves without generating a second tap',()=>{const s=new SwipeInput();s.down(0,100);s.move(100,20,80);expect(s.takeJump()).toBe(true);expect(s.takeDirection()).toBe(1);s.up(100,20,80);expect(s.takeJump()).toBe(false);});
+test('sensitivity scales with original grid size, not a phone resolution',()=>{const a=new SwipeInput(),b=new SwipeInput();a.down(0,0);b.down(0,0);a.move(120,0,80);b.move(60,0,40);expect(a.units).toBe(b.units);const low=new SwipeInput(),high=new SwipeInput();low.sensitivity='low';high.sensitivity='high';low.down(0,0);high.down(0,0);low.move(160,0,80);high.move(160,0,80);expect(high.units).toBeGreaterThan(low.units);});
